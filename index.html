@@ -271,6 +271,64 @@
             margin-top: 1rem;
         }
 
+        .btn-admin {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(238, 90, 36, 0.4);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .admin-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+            display: inline-block;
+        }
+
+        .admin-controls {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-info {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -291,7 +349,10 @@
     <div class="container">
         <!-- 헤더 카드 -->
         <div class="header-card">
-            <h1>자동차 출고 후기</h1>
+            <h1>
+                자동차 출고 후기
+                <span id="adminStatus" style="display: none;" class="admin-badge">관리자 모드</span>
+            </h1>
             <p class="subtitle">고객님들의 생생한 출고 경험을 공유합니다</p>
             
             <!-- 통계 -->
@@ -311,6 +372,7 @@
             </div>
             
             <button class="btn-primary" onclick="toggleForm()">후기 작성하기</button>
+            <button class="btn-admin" onclick="toggleAdminMode()">관리자 모드</button>
         </div>
 
         <!-- 후기 작성 폼 -->
@@ -398,6 +460,8 @@
     <script>
         let reviews = [];
         let selectedRating = 5;
+        let isAdminMode = false;
+        const ADMIN_PASSWORD = '1234'; // 실제 환경에서는 더 안전한 방법 사용
 
         // 초기 샘플 데이터
         const sampleReviews = [
@@ -424,6 +488,19 @@
                 content: '차량은 정말 마음에 들지만, 출고 대기 시간이 조금 길었어요. 그래도 직원분들이 친절하게 대응해주셔서 좋았습니다.',
                 wouldRecommend: true,
                 createdAt: new Date('2024-12-21').toISOString()
+            },
+            {
+                id: 3,
+                customerName: '악성유저',
+                carModel: '그랜저',
+                carColor: '블랙',
+                deliveryDate: '2024-12-25',
+                rating: 1,
+                title: '최악의 경험',
+                content: '별로였습니다. (이것은 관리 기능 테스트를 위한 샘플 악성 후기입니다)',
+                wouldRecommend: false,
+                createdAt: new Date('2024-12-26').toISOString(),
+                reportCount: 5  // 이미 5번 신고된 것으로 표시
             }
         ];
 
@@ -557,7 +634,10 @@
                 <div class="review-card">
                     <div class="review-header">
                         <div>
-                            <div class="review-title">${review.title}</div>
+                            <div class="review-title">
+                                ${review.title}
+                                ${review.reportCount && review.reportCount >= 3 ? '<span class="admin-badge">⚠️ 다수 신고</span>' : ''}
+                            </div>
                             <div class="review-meta">
                                 <span>👤 ${review.customerName}</span>
                                 <span>🚗 ${review.carModel} (${review.carColor})</span>
@@ -575,6 +655,20 @@
                     <div style="color: #999; font-size: 0.8rem;">
                         작성일: ${new Date(review.createdAt).toLocaleDateString('ko-KR')}
                     </div>
+                    ${isAdminMode ? `
+                        <div class="admin-controls">
+                            <div class="report-info">
+                                ${review.reportCount ? `신고 횟수: ${review.reportCount}회` : '신고 없음'}
+                            </div>
+                            <button class="btn-delete" onclick="deleteReview(${review.id})">삭제</button>
+                        </div>
+                    ` : `
+                        <div style="margin-top: 1rem;">
+                            <button style="background: #6c757d; color: white; border: none; padding: 0.4rem 1rem; border-radius: 5px; font-size: 0.85rem; cursor: pointer;" onclick="reportReview(${review.id})">
+                                🚨 신고하기
+                            </button>
+                        </div>
+                    `}
                 </div>
             `).join('');
         }
@@ -606,6 +700,49 @@
         // 필터 변경 시
         function filterReviews() {
             displayReviews();
+        }
+
+        // 관리자 모드 토글
+        function toggleAdminMode() {
+            if (!isAdminMode) {
+                const password = prompt('관리자 비밀번호를 입력하세요:');
+                if (password === ADMIN_PASSWORD) {
+                    isAdminMode = true;
+                    document.getElementById('adminStatus').style.display = 'inline-block';
+                    alert('관리자 모드가 활성화되었습니다.');
+                    displayReviews();
+                } else if (password !== null) {
+                    alert('비밀번호가 틀렸습니다.');
+                }
+            } else {
+                isAdminMode = false;
+                document.getElementById('adminStatus').style.display = 'none';
+                alert('관리자 모드가 비활성화되었습니다.');
+                displayReviews();
+            }
+        }
+
+        // 후기 삭제
+        function deleteReview(reviewId) {
+            if (confirm('정말로 이 후기를 삭제하시겠습니까?')) {
+                reviews = reviews.filter(review => review.id !== reviewId);
+                displayReviews();
+                updateStats();
+                alert('후기가 삭제되었습니다.');
+            }
+        }
+
+        // 후기 신고 (실제로는 서버에 전송)
+        function reportReview(reviewId) {
+            const review = reviews.find(r => r.id === reviewId);
+            if (review) {
+                if (!review.reportCount) {
+                    review.reportCount = 0;
+                }
+                review.reportCount++;
+                displayReviews();
+                alert('신고가 접수되었습니다. 관리자가 검토할 예정입니다.');
+            }
         }
     </script>
 </body>

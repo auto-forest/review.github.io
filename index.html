@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자동차 출고 후기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            padding: 0.75rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .rating-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .star {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .filter-bar {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .review-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .review-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-meta {
+            color: #666;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .review-content {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .review-rating .star {
+            font-size: 1.2rem;
+            cursor: default;
+        }
+
+        .recommend-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 카드 -->
+        <div class="header-card">
+            <h1>자동차 출고 후기</h1>
+            <p class="subtitle">고객님들의 생생한 출고 경험을 공유합니다</p>
+            
+            <!-- 통계 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>총 후기 수</div>
+                    <div class="stat-value" id="totalReviews">0개</div>
+                </div>
+                <div class="stat-card">
+                    <div>평균 평점</div>
+                    <div class="stat-value" id="avgRating">0점</div>
+                </div>
+                <div class="stat-card">
+                    <div>추천율</div>
+                    <div class="stat-value" id="recommendRate">0%</div>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="toggleForm()">후기 작성하기</button>
+        </div>
+
+        <!-- 후기 작성 폼 -->
+        <div class="form-container" id="reviewForm">
+            <h2 style="margin-bottom: 1.5rem;">출고 후기 작성</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>고객명</label>
+                    <input type="text" id="customerName" placeholder="이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label>차량 모델</label>
+                    <input type="text" id="carModel" placeholder="예: 제네시스 G80">
+                </div>
+                <div class="form-group">
+                    <label>차량 색상</label>
+                    <input type="text" id="carColor" placeholder="예: 카본 메탈">
+                </div>
+                <div class="form-group">
+                    <label>출고일</label>
+                    <input type="date" id="deliveryDate">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>평점</label>
+                <div class="rating-container" id="ratingContainer">
+                    <span class="star" data-rating="1">★</span>
+                    <span class="star" data-rating="2">★</span>
+                    <span class="star" data-rating="3">★</span>
+                    <span class="star" data-rating="4">★</span>
+                    <span class="star" data-rating="5">★</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>제목</label>
+                <input type="text" id="reviewTitle" placeholder="후기 제목을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label>상세 후기</label>
+                <textarea id="reviewContent" placeholder="출고 경험을 자세히 공유해주세요"></textarea>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="wouldRecommend" checked>
+                <label for="wouldRecommend">다른 고객에게 추천하시겠습니까?</label>
+            </div>
+            
+            <button class="btn-primary btn-submit" onclick="submitReview()">후기 등록하기</button>
+        </div>
+
+        <!-- 필터 바 -->
+        <div class="filter-bar">
+            <div>
+                <label style="margin-right: 0.5rem;">평점 필터:</label>
+                <select id="filterRating" onchange="filterReviews()">
+                    <option value="0">모든 평점</option>
+                    <option value="5">5점</option>
+                    <option value="4">4점</option>
+                    <option value="3">3점</option>
+                    <option value="2">2점</option>
+                    <option value="1">1점</option>
+                </select>
+            </div>
+            <div>
+                <label style="margin-right: 0.5rem;">정렬:</label>
+                <select id="sortBy" onchange="filterReviews()">
+                    <option value="recent">최신순</option>
+                    <option value="rating">평점순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 후기 목록 -->
+        <div class="review-list" id="reviewList">
+            <div class="empty-state">
+                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">아직 등록된 후기가 없습니다.</p>
+                <p style="color: #999;">첫 번째 후기를 작성해보세요!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reviews = [];
+        let selectedRating = 5;
+
+        // 초기 샘플 데이터
+        const sampleReviews = [
+            {
+                id: 1,
+                customerName: '김민수',
+                carModel: '제네시스 G90',
+                carColor: '다크 실버',
+                deliveryDate: '2024-12-15',
+                rating: 5,
+                title: '최고의 선택이었습니다',
+                content: '출고 과정이 매우 친절하고 체계적이었습니다. 차량 상태도 완벽하고, 직원분들의 설명도 상세해서 만족스러웠습니다.',
+                wouldRecommend: true,
+                createdAt: new Date('2024-12-16').toISOString()
+            },
+            {
+                id: 2,
+                customerName: '이지은',
+                carModel: '아반떼 N',
+                carColor: '퍼포먼스 블루',
+                deliveryDate: '2024-12-20',
+                rating: 4,
+                title: '대체로 만족스러운 출고',
+                content: '차량은 정말 마음에 들지만, 출고 대기 시간이 조금 길었어요. 그래도 직원분들이 친절하게 대응해주셔서 좋았습니다.',
+                wouldRecommend: true,
+                createdAt: new Date('2024-12-21').toISOString()
+            }
+        ];
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            reviews = sampleReviews;
+            setupRatingStars();
+            displayReviews();
+            updateStats();
+        };
+
+        // 별점 클릭 이벤트 설정
+        function setupRatingStars() {
+            const stars = document.querySelectorAll('#ratingContainer .star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    selectedRating = parseInt(this.dataset.rating);
+                    updateRatingDisplay();
+                });
+            });
+        }
+
+        // 별점 표시 업데이트
+        function updateRatingDisplay() {
+            const stars = document.querySelectorAll('#ratingContainer .star');
+            stars.forEach((star, index) => {
+                if (index < selectedRating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // 폼 토글
+        function toggleForm() {
+            const form = document.getElementById('reviewForm');
+            if (form.style.display === 'block') {
+                form.style.display = 'none';
+            } else {
+                form.style.display = 'block';
+                resetForm();
+            }
+        }
+
+        // 폼 초기화
+        function resetForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('carModel').value = '';
+            document.getElementById('carColor').value = '';
+            document.getElementById('deliveryDate').value = '';
+            document.getElementById('reviewTitle').value = '';
+            document.getElementById('reviewContent').value = '';
+            document.getElementById('wouldRecommend').checked = true;
+            selectedRating = 5;
+            updateRatingDisplay();
+        }
+
+        // 후기 제출
+        function submitReview() {
+            const customerName = document.getElementById('customerName').value;
+            const carModel = document.getElementById('carModel').value;
+            const carColor = document.getElementById('carColor').value;
+            const deliveryDate = document.getElementById('deliveryDate').value;
+            const title = document.getElementById('reviewTitle').value;
+            const content = document.getElementById('reviewContent').value;
+            const wouldRecommend = document.getElementById('wouldRecommend').checked;
+
+            // 유효성 검사
+            if (!customerName || !carModel || !carColor || !deliveryDate || !title || !content) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            // 새 리뷰 생성
+            const newReview = {
+                id: Date.now(),
+                customerName,
+                carModel,
+                carColor,
+                deliveryDate,
+                rating: selectedRating,
+                title,
+                content,
+                wouldRecommend,
+                createdAt: new Date().toISOString()
+            };
+
+            // 리뷰 추가
+            reviews.unshift(newReview);
+            
+            // 화면 업데이트
+            displayReviews();
+            updateStats();
+            toggleForm();
+        }
+
+        // 리뷰 표시
+        function displayReviews() {
+            const reviewList = document.getElementById('reviewList');
+            const filterRating = parseInt(document.getElementById('filterRating').value);
+            const sortBy = document.getElementById('sortBy').value;
+
+            // 필터링
+            let filteredReviews = reviews;
+            if (filterRating > 0) {
+                filteredReviews = reviews.filter(review => review.rating === filterRating);
+            }
+
+            // 정렬
+            filteredReviews.sort((a, b) => {
+                if (sortBy === 'recent') {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                } else {
+                    return b.rating - a.rating;
+                }
+            });
+
+            // HTML 생성
+            if (filteredReviews.length === 0) {
+                reviewList.innerHTML = `
+                    <div class="empty-state">
+                        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">조건에 맞는 후기가 없습니다.</p>
+                        <p style="color: #999;">다른 필터를 선택해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            reviewList.innerHTML = filteredReviews.map(review => `
+                <div class="review-card">
+                    <div class="review-header">
+                        <div>
+                            <div class="review-title">${review.title}</div>
+                            <div class="review-meta">
+                                <span>👤 ${review.customerName}</span>
+                                <span>🚗 ${review.carModel} (${review.carColor})</span>
+                                <span>📅 출고일: ${review.deliveryDate}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="review-rating">
+                                ${generateStars(review.rating)}
+                            </div>
+                            ${review.wouldRecommend ? '<span class="recommend-badge">추천</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="review-content">${review.content}</div>
+                    <div style="color: #999; font-size: 0.8rem;">
+                        작성일: ${new Date(review.createdAt).toLocaleDateString('ko-KR')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 별점 HTML 생성
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += `<span class="star ${i <= rating ? 'active' : ''}">★</span>`;
+            }
+            return stars;
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            const totalReviews = reviews.length;
+            const avgRating = totalReviews > 0 
+                ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
+                : 0;
+            const recommendRate = totalReviews > 0
+                ? Math.round((reviews.filter(review => review.wouldRecommend).length / totalReviews) * 100)
+                : 0;
+
+            document.getElementById('totalReviews').textContent = `${totalReviews}개`;
+            document.getElementById('avgRating').textContent = `${avgRating}점`;
+            document.getElementById('recommendRate').textContent = `${recommendRate}%`;
+        }
+
+        // 필터 변경 시
+        function filterReviews() {
+            displayReviews();
+        }
+    </script>
+</body>
+</html>

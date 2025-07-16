@@ -329,6 +329,20 @@
             font-size: 0.9rem;
         }
 
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -341,6 +355,11 @@
             .filter-bar {
                 flex-direction: column;
                 align-items: stretch;
+            }
+
+            .btn-admin {
+                margin-left: 0;
+                margin-top: 1rem;
             }
         }
     </style>
@@ -450,10 +469,7 @@
 
         <!-- 후기 목록 -->
         <div class="review-list" id="reviewList">
-            <div class="empty-state">
-                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">아직 등록된 후기가 없습니다.</p>
-                <p style="color: #999;">첫 번째 후기를 작성해보세요!</p>
-            </div>
+            <div class="loading">데이터를 불러오는 중...</div>
         </div>
     </div>
 
@@ -461,56 +477,56 @@
         let reviews = [];
         let selectedRating = 5;
         let isAdminMode = false;
-        const ADMIN_PASSWORD = '1234'; // 실제 환경에서는 더 안전한 방법 사용
-
-        // 초기 샘플 데이터
-        const sampleReviews = [
-            {
-                id: 1,
-                customerName: '김민수',
-                carModel: '제네시스 G90',
-                carColor: '다크 실버',
-                deliveryDate: '2024-12-15',
-                rating: 5,
-                title: '최고의 선택이었습니다',
-                content: '출고 과정이 매우 친절하고 체계적이었습니다. 차량 상태도 완벽하고, 직원분들의 설명도 상세해서 만족스러웠습니다.',
-                wouldRecommend: true,
-                createdAt: new Date('2024-12-16').toISOString()
-            },
-            {
-                id: 2,
-                customerName: '이지은',
-                carModel: '아반떼 N',
-                carColor: '퍼포먼스 블루',
-                deliveryDate: '2024-12-20',
-                rating: 4,
-                title: '대체로 만족스러운 출고',
-                content: '차량은 정말 마음에 들지만, 출고 대기 시간이 조금 길었어요. 그래도 직원분들이 친절하게 대응해주셔서 좋았습니다.',
-                wouldRecommend: true,
-                createdAt: new Date('2024-12-21').toISOString()
-            },
-            {
-                id: 3,
-                customerName: '악성유저',
-                carModel: '그랜저',
-                carColor: '블랙',
-                deliveryDate: '2024-12-25',
-                rating: 1,
-                title: '최악의 경험',
-                content: '별로였습니다. (이것은 관리 기능 테스트를 위한 샘플 악성 후기입니다)',
-                wouldRecommend: false,
-                createdAt: new Date('2024-12-26').toISOString(),
-                reportCount: 5  // 이미 5번 신고된 것으로 표시
-            }
-        ];
+        const ADMIN_PASSWORD = '1234';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQZuE1PuUqchxa22zpH4EyYwzYXVRIJyp-GosetUkTQPCViHiporjeI90R6QOwZqwA/exec';
 
         // 페이지 로드 시 초기화
-        window.onload = function() {
-            reviews = sampleReviews;
+        window.onload = async function() {
             setupRatingStars();
-            displayReviews();
-            updateStats();
+            await loadReviews();
         };
+
+        // 구글 시트에서 데이터 불러오기
+        async function loadReviews() {
+            const reviewList = document.getElementById('reviewList');
+            reviewList.innerHTML = '<div class="loading">데이터를 불러오는 중...</div>';
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getReviews`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('응답을 파싱할 수 없습니다');
+                }
+                
+                if (data.success) {
+                    reviews = data.reviews || [];
+                    displayReviews();
+                    updateStats();
+                } else {
+                    throw new Error(data.error || '데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                reviewList.innerHTML = `
+                    <div class="error-message">
+                        <strong>데이터를 불러오는 중 오류가 발생했습니다.</strong><br>
+                        ${error.message}<br><br>
+                        <button class="btn-primary" onclick="loadReviews()">다시 시도</button>
+                    </div>
+                `;
+            }
+        }
 
         // 별점 클릭 이벤트 설정
         function setupRatingStars() {
@@ -521,6 +537,7 @@
                     updateRatingDisplay();
                 });
             });
+            updateRatingDisplay();
         }
 
         // 별점 표시 업데이트
@@ -560,7 +577,7 @@
         }
 
         // 후기 제출
-        function submitReview() {
+        async function submitReview() {
             const customerName = document.getElementById('customerName').value;
             const carModel = document.getElementById('carModel').value;
             const carColor = document.getElementById('carColor').value;
@@ -589,13 +606,31 @@
                 createdAt: new Date().toISOString()
             };
 
-            // 리뷰 추가
-            reviews.unshift(newReview);
-            
-            // 화면 업데이트
-            displayReviews();
-            updateStats();
-            toggleForm();
+            try {
+                // 구글 시트에 저장
+                const response = await fetch(`${SCRIPT_URL}?action=addReview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newReview)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // 로컬 배열에도 추가
+                    reviews.unshift(newReview);
+                    displayReviews();
+                    updateStats();
+                    toggleForm();
+                    alert('후기가 등록되었습니다!');
+                } else {
+                    throw new Error('저장 실패');
+                }
+            } catch (error) {
+                console.error('Error saving review:', error);
+                alert('후기 저장 중 오류가 발생했습니다.');
+            }
         }
 
         // 리뷰 표시
@@ -723,27 +758,65 @@
         }
 
         // 후기 삭제
-        function deleteReview(reviewId) {
+        async function deleteReview(reviewId) {
             if (confirm('정말로 이 후기를 삭제하시겠습니까?')) {
-                reviews = reviews.filter(review => review.id !== reviewId);
-                displayReviews();
-                updateStats();
-                alert('후기가 삭제되었습니다.');
+                try {
+                    const response = await fetch(`${SCRIPT_URL}?action=deleteReview`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id: reviewId })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        reviews = reviews.filter(review => review.id !== reviewId);
+                        displayReviews();
+                        updateStats();
+                        alert('후기가 삭제되었습니다.');
+                    } else {
+                        throw new Error('삭제 실패');
+                    }
+                } catch (error) {
+                    console.error('Error deleting review:', error);
+                    alert('후기 삭제 중 오류가 발생했습니다.');
+                }
             }
         }
 
-        // 후기 신고 (실제로는 서버에 전송)
-        function reportReview(reviewId) {
-            const review = reviews.find(r => r.id === reviewId);
-            if (review) {
-                if (!review.reportCount) {
-                    review.reportCount = 0;
+        // 후기 신고
+        async function reportReview(reviewId) {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=reportReview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: reviewId })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // 로컬에서도 업데이트
+                    const review = reviews.find(r => r.id === reviewId);
+                    if (review) {
+                        if (!review.reportCount) {
+                            review.reportCount = 0;
+                        }
+                        review.reportCount++;
+                        displayReviews();
+                    }
+                    alert('신고가 접수되었습니다. 관리자가 검토할 예정입니다.');
+                } else {
+                    throw new Error('신고 실패');
                 }
-                review.reportCount++;
-                displayReviews();
-                alert('신고가 접수되었습니다. 관리자가 검토할 예정입니다.');
+            } catch (error) {
+                console.error('Error reporting review:', error);
+                alert('신고 처리 중 오류가 발생했습니다.');
             }
         }
     </script>
 </body>
 </html>
+

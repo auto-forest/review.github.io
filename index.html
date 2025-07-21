@@ -1122,10 +1122,8 @@ function showLoading(show) {
         if (loader) loader.remove();
     }
 }
-        // Supabase 설정 (실제 사용시 여기에 Supabase 클라이언트 추가)
-        // const supabaseUrl = 'https://vljxgespgbbqqyumafrz.supabase.co';
-        // const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsanhnZXNwZ2JicXF5dW1hZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNzQ0NjAsImV4cCI6MjA2ODY1MDQ2MH0.kk6NtsP7vZcvX7A8wSg294mEQpl8kPDR_d_J65EcwSw';
-        // const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 중복된 Supabase 설정 제거됨 - 상단의 설정을 사용
 
         let reviews = [];
         let selectedImages = [];
@@ -1313,59 +1311,76 @@ function showLoading(show) {
             updateImagePreview();
         }
 
-        // 리뷰 제출
+        // 리뷰 제출 - Supabase 연동 버전 사용
         async function submitReview() {
-            const customerName = document.getElementById('customerName').value;
-            const carModel = document.getElementById('carModel').value;
-            const content = document.getElementById('reviewContent').value;
+            const customerName = document.getElementById('customerName').value.trim();
+            const carModel = document.getElementById('carModel').value.trim();
+            const content = document.getElementById('reviewContent').value.trim();
             
             if (!customerName || !carModel || !content) {
                 showToast('모든 필수 항목을 입력해주세요.', 'error');
                 return;
             }
             
-            const review = {
-                id: Date.now(),
-                customerName,
-                carModel,
-                rating: currentRating,
-                content,
-                date: new Date().toISOString().split('T')[0],
-                images: selectedImages.map(img => img.url)
-            };
+            showLoading(true);
             
-            // 실제 구현시 여기서 Supabase에 저장
-            // await saveReviewToSupabase(review);
-            
-            reviews.unshift(review);
-            localStorage.setItem('carReviews', JSON.stringify(reviews));
-            
-            displayReviews();
-            closeModal();
-            showToast('후기가 성공적으로 등록되었습니다!', 'success');
+            try {
+                const review = {
+                    customerName,
+                    carModel,
+                    rating: currentRating,
+                    content,
+                    images: selectedImages // 이미지 파일들
+                };
+                
+                const result = await saveReviewToSupabase(review);
+                
+                if (result.success) {
+                    closeModal();
+                    showToast('후기가 성공적으로 등록되었습니다!', 'success');
+                    await loadReviewsFromSupabase(); // 새로고침
+                } else {
+                    showToast(`오류: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('리뷰 제출 오류:', error);
+                showToast('리뷰 등록 중 오류가 발생했습니다.', 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
-        // 리뷰 로드
-        function loadReviews() {
-            // 실제 구현시 Supabase에서 로드
-            // reviews = await loadReviewsFromSupabase();
+        // 리뷰 로드 - Supabase 연동 버전 사용
+        async function loadReviews() {
+            showLoading(true);
             
-            const savedReviews = localStorage.getItem('carReviews');
-            if (savedReviews) {
-                reviews = JSON.parse(savedReviews);
-            } else {
-                // 샘플 데이터
-                reviews = [{
-                    id: 1,
-                    customerName: '김민수',
-                    carModel: '그랜저 IG 하이브리드',
-                    rating: 5,
-                    content: '정말 만족스러운 출고였습니다. 직원분들도 친절하시고 차량 상태도 완벽했어요!',
-                    date: '2025-01-15',
-                    images: []
-                }];
+            try {
+                const result = await loadReviewsFromSupabase();
+                
+                if (result.success) {
+                    reviews = result.data || [];
+                    displayReviews();
+                } else {
+                    console.error('리뷰 로드 오류:', result.error);
+                    // 오류 시 샘플 데이터 표시
+                    reviews = [{
+                        id: 1,
+                        customerName: '김민수',
+                        carModel: '그랜저 IG 하이브리드',
+                        rating: 5,
+                        content: '정말 만족스러운 출고였습니다. 직원분들도 친절하시고 차량 상태도 완벽했어요!',
+                        date: '2025-01-15',
+                        images: []
+                    }];
+                    displayReviews();
+                    showToast('데이터베이스 연결 오류 - 샘플 데이터를 표시합니다.', 'error');
+                }
+            } catch (error) {
+                console.error('리뷰 로드 예외:', error);
+                showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
+            } finally {
+                showLoading(false);
             }
-            displayReviews();
         }
 
         // 리뷰 표시

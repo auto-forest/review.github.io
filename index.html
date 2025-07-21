@@ -1,224 +1,510 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Supabase CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>자동차 출고 후기</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>럭셔리 카 리뷰 | 프리미엄 자동차 출고 후기</title>
+    
+    <!-- Firebase SDK (Storage 제외) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --dark-gradient: linear-gradient(135deg, #1a1c20 0%, #2d3436 100%);
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --glass-border: rgba(255, 255, 255, 0.18);
-            --shadow-elegant: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #e94560;
+            --gold: #ffd700;
+            --text: #eee;
+            --text-secondary: #a8a8a8;
+            --card-bg: rgba(22, 33, 62, 0.7);
+            --glass: rgba(255, 255, 255, 0.05);
         }
-
+        
         body {
-            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
             min-height: 100vh;
-            line-height: 1.6;
-            position: relative;
+            color: var(--text);
+            overflow-x: hidden;
         }
-
+        
+        /* 배경 애니메이션 */
         body::before {
             content: '';
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23000" fill-opacity="0.03"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>') repeat;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
             pointer-events: none;
-            opacity: 0.5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            position: relative;
             z-index: 1;
         }
-
-        header {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-elegant);
-            padding: 25px 0;
-            margin-bottom: 40px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-weight: 700;
-            font-size: 32px;
-            letter-spacing: -0.5px;
-        }
-
-        h1 svg {
-            width: 40px;
-            height: 40px;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        .subtitle {
-            color: #64748b;
-            font-size: 15px;
-            margin-top: 5px;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-        }
-
-        .btn {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
             position: relative;
-            overflow: hidden;
-            letter-spacing: 0.5px;
+            z-index: 2;
         }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
+        
+        /* 헤더 */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 1s ease;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 300;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+        
+        /* API 키 설정 안내 */
+        .setup-notice {
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .setup-notice h3 {
+            margin-bottom: 10px;
+        }
+        
+        .setup-notice a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+        
+        .setup-notice a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 글쓰기 버튼 */
+        .write-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            border: none;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
+            transition: all 0.3s;
+            z-index: 100;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        
+        .write-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.7);
         }
-
-        .btn-secondary {
-            background: white;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            border-color: #cbd5e1;
-        }
-
-        .btn-danger {
-            background: var(--secondary-gradient);
-            color: white;
-            padding: 8px 16px;
-            font-size: 14px;
-            box-shadow: 0 4px 10px rgba(240, 147, 251, 0.3);
-        }
-
-        .btn-danger:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(240, 147, 251, 0.5);
-        }
-
+        
+        /* 모달 */
         .modal {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
             z-index: 1000;
-            overflow-y: auto;
-            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
         }
-
+        
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-header h2 {
+            font-size: 2em;
+            font-weight: 300;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 30px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .close-btn:hover {
+            opacity: 1;
+        }
+        
+        /* 폼 스타일 */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 300;
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        /* 별점 */
+        .rating-container {
+            display: flex;
+            gap: 15px;
+            font-size: 35px;
+            margin-top: 10px;
+        }
+        
+        .star-input {
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.3;
+        }
+        
+        .star-input:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        
+        .star-input.active {
+            color: var(--gold);
+            opacity: 1;
+        }
+        
+        /* 이미지 업로드 */
+        .image-upload {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-upload:hover {
+            border-color: var(--accent);
+            background: var(--glass);
+        }
+        
+        .image-upload.dragover {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .image-preview {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(233, 69, 96, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 제출 버튼 */
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent) 0%, #c42348 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.5);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 리뷰 그리드 */
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 100px;
+        }
+        
+        .review-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .review-images {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+            background: var(--secondary);
+        }
+        
+        .review-images img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        
+        .review-card:hover .review-images img {
+            transform: scale(1.05);
+        }
+        
+        .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            font-size: 60px;
+            opacity: 0.2;
+        }
+        
+        .review-content {
+            padding: 30px;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+        
+        .car-info h3 {
+            font-size: 1.5em;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+        
+        .car-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .review-rating {
+            color: var(--gold);
+            font-size: 20px;
+        }
+        
+        .review-text {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        
+        .review-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .review-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .delete-btn {
+            background: none;
+            border: 1px solid rgba(233, 69, 96, 0.5);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        
+        .delete-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+        
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 100px;
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-
-        .modal-content {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            margin: 50px auto;
-            padding: 40px;
-            border-radius: 20px;
-            max-width: 600px;
-            position: relative;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-            animation: slideUp 0.4s ease-out;
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         @keyframes slideUp {
             from {
                 transform: translateY(50px);
@@ -229,1269 +515,419 @@
                 opacity: 1;
             }
         }
-
-        .close {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            font-size: 30px;
-            cursor: pointer;
-            color: #94a3b8;
-            transition: all 0.3s;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .close:hover {
-            color: #475569;
-            background: rgba(0, 0, 0, 0.1);
-            transform: rotate(90deg);
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #334155;
-            font-weight: 500;
-            font-size: 14px;
-            letter-spacing: 0.3px;
-        }
-
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            transition: all 0.3s;
-            background: white;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            transform: translateY(-1px);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .star-rating {
-            display: flex;
-            gap: 8px;
-            font-size: 28px;
-        }
-
-        .star {
-            cursor: pointer;
-            color: #e2e8f0;
-            transition: all 0.2s;
-            transform-origin: center;
-        }
-
-        .star:hover {
-            transform: scale(1.2);
-        }
-
-        .star.active {
-            color: #fbbf24;
-            text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
-            animation: starPop 0.3s ease-out;
-        }
-
-        @keyframes starPop {
-            0% { transform: scale(0.8); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1); }
-        }
-
-        .image-upload {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .upload-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        }
-
-        .upload-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        #imageInput {
-            display: none;
-        }
-
-        #imageCount {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .image-preview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .preview-image {
-            position: relative;
-            width: 100%;
-            padding-top: 100%;
-            background-size: cover;
-            background-position: center;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
-        }
-
-        .preview-image:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .remove-image {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: var(--secondary-gradient);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .remove-image:hover {
-            transform: scale(1.1) rotate(90deg);
-        }
-
-        .reviews-container {
-            display: grid;
-            gap: 30px;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeOutDown {
-            from {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-        }
-
-        .review-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            padding: 35px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-elegant);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .review-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--primary-gradient);
-            transform: scaleX(0);
-            transition: transform 0.4s;
-        }
-
-        .review-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .review-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .review-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 20px;
-        }
-
-        .reviewer-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .avatar {
-            width: 60px;
-            height: 60px;
-            background: var(--primary-gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .avatar::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
-            animation: shine 3s ease-in-out infinite;
-        }
-
-        @keyframes shine {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .reviewer-details h3 {
-            margin-bottom: 5px;
-            color: #1e293b;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .car-model {
-            color: #64748b;
-            font-size: 14px;
-            font-weight: 400;
-        }
-
-        .review-meta {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-top: 10px;
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .review-meta .star-rating {
-            font-size: 16px;
-            gap: 3px;
-        }
-
-        .review-content {
-            margin: 25px 0;
-            color: #475569;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            font-size: 15px;
-        }
-
-        .review-images {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .review-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .review-image:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .admin-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #94a3b8;
-            font-size: 16px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            box-shadow: var(--shadow-elegant);
-        }
-
-        .empty-state p {
-            margin-bottom: 10px;
-        }
-
-        /* 모달 내부 버튼 스타일 개선 */
-        .modal-content h2 {
-            margin-bottom: 30px;
-            color: #1e293b;
-            font-size: 24px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .modal-content .btn {
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        /* 로딩 효과 */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* 스크롤바 스타일 */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            border: 2px solid #f1f5f9;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46a1 100%);
-        }
-
-        /* 선택 텍스트 스타일 */
-        ::selection {
-            background: rgba(102, 126, 234, 0.2);
-            color: #1e293b;
-        }
-
-        /* 로딩 상태 스타일 */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
+        
+        /* 반응형 */
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .reviews-grid {
+                grid-template-columns: 1fr;
                 gap: 20px;
-                text-align: center;
             }
-
-            h1 {
-                font-size: 28px;
-            }
-
+            
             .modal-content {
-                margin: 20px;
                 padding: 30px 20px;
-            }
-
-            .review-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .review-card {
-                padding: 25px;
-            }
-
-            .avatar {
-                width: 50px;
-                height: 50px;
-            }
-
-            .review-images {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-
-            .review-image {
-                height: 120px;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div>
-                    <h1>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="url(#car-gradient)" stroke="url(#car-gradient)" stroke-width="1.5">
-                            <defs>
-                                <linearGradient id="car-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#667eea"/>
-                                    <stop offset="100%" style="stop-color:#764ba2"/>
-                                </linearGradient>
-                            </defs>
-                            <path fill="none" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v8c0 .6.4 1 1 1h2m0 0a2 2 0 1 0 4 0m-4 0a2 2 0 1 1 4 0m0 0h3m3 0a2 2 0 1 0 4 0m-4 0a2 2 0 1 1 4 0"></path>
-                            <path fill="url(#car-gradient)" d="M5 11h6l1.5-2H8l-3 2z" opacity="0.3"/>
-                        </svg>
-                        자동차 출고 후기
-                    </h1>
-                    <p class="subtitle">고객님들의 소중한 출고 경험을 공유해주세요</p>
-                </div>
-                <div class="admin-controls">
-                    <button class="btn btn-primary" onclick="openModal()">후기 작성하기</button>
-                    <button class="btn btn-secondary" id="adminBtn" onclick="toggleAdmin()">관리자</button>
-                </div>
-            </div>
+    <div class="container">
+        <div class="header">
+            <h1>Luxury Car Reviews</h1>
+            <p>프리미엄 자동차 출고 경험을 공유하세요</p>
         </div>
-    </header>
-
-    <main class="container">
-        <div id="reviewsContainer" class="reviews-container">
-            <div class="empty-state">
-                <p>아직 작성된 후기가 없습니다.</p>
-            </div>
+        
+        <!-- ImgBB API 키 설정 안내 -->
+        <div id="setupNotice" class="setup-notice" style="display: none;">
+            <h3>⚠️ ImgBB API 키 설정이 필요합니다</h3>
+            <p>이미지 업로드를 위해 ImgBB API 키를 설정해주세요.</p>
+            <p>1. <a href="https://imgbb.com/" target="_blank">ImgBB.com</a>에 가입 (무료)</p>
+            <p>2. <a href="https://api.imgbb.com/" target="_blank">API 섹션</a>에서 API 키 발급</p>
+            <p>3. 아래 코드에서 IMGBB_API_KEY를 본인의 키로 변경</p>
         </div>
-    </main>
-
-    <!-- 리뷰 작성 모달 -->
-    <div id="reviewModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>출고 후기 작성</h2>
-            <br>
-            <div class="form-group">
-                <label for="customerName">고객명</label>
-                <input type="text" id="customerName" placeholder="이름을 입력하세요">
-            </div>
-            
-            <div class="form-group">
-                <label for="carModel">차량 모델</label>
-                <input type="text" id="carModel" placeholder="예: 그랜저 IG 하이브리드">
-            </div>
-            
-            <div class="form-group">
-                <label>평점</label>
-                <div class="star-rating" id="starRating">
-                    <span class="star" data-rating="1">★</span>
-                    <span class="star" data-rating="2">★</span>
-                    <span class="star" data-rating="3">★</span>
-                    <span class="star" data-rating="4">★</span>
-                    <span class="star" data-rating="5">★</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="reviewContent">후기 내용</label>
-                <textarea id="reviewContent" placeholder="출고 경험을 자세히 적어주세요"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>사진 첨부</label>
-                <div class="image-upload">
-                    <label for="imageInput" class="upload-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                        사진 선택
-                    </label>
-                    <input type="file" id="imageInput" multiple accept="image/*">
-                    <span id="imageCount">0개의 사진이 선택됨</span>
-                </div>
-                <div id="imagePreview" class="image-preview"></div>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 30px;">
-                <button class="btn btn-primary" style="flex: 1;" onclick="submitReview()">작성 완료</button>
-                <button class="btn btn-secondary" style="flex: 1;" onclick="closeModal()">취소</button>
+        
+        <div id="reviewsContainer" class="reviews-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>리뷰를 불러오는 중...</p>
             </div>
         </div>
     </div>
-
-    <script>
-        // ===== Supabase 초기화 =====
-const SUPABASE_URL = 'https://vljxgespgbbqqyumafrz.supabase.co'; // 여기에 실제 URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsanhnZXNwZ2JicXF5dW1hZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNzQ0NjAsImV4cCI6MjA2ODY1MDQ2MH0.kk6NtsP7vZcvX7A8wSg294mEQpl8kPDR_d_J65EcwSw'; // 여기에 실제 키
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ===== 데이터베이스 함수들 =====
-
-// 1. 이미지 업로드 함수
-async function uploadImageToSupabase(file) {
-    try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `reviews/${fileName}`;
-
-        const { data, error } = await supabase.storage
-            .from('review-images')
-            .upload(filePath, file, {
-                cacheControl: '3600',
-                upsert: false
-            });
-
-        if (error) throw error;
-
-        // 공개 URL 가져오기
-        const { data: { publicUrl } } = supabase.storage
-            .from('review-images')
-            .getPublicUrl(filePath);
-
-        return publicUrl;
-    } catch (error) {
-        console.error('이미지 업로드 오류:', error);
-        return null;
-    }
-}
-
-// 2. 리뷰 저장 함수 (고급 버전)
-async function saveReviewToSupabase(review) {
-    try {
-        // 로딩 표시
-        showLoading(true);
-
-        // 이미지 업로드 처리
-        const imageUrls = [];
-        for (const imageData of selectedImages) {
-            const url = await uploadImageToSupabase(imageData.file);
-            if (url) imageUrls.push(url);
-        }
-
-        // 리뷰 데이터 준비
-        const reviewData = {
-            customer_name: review.customerName,
-            car_model: review.carModel,
-            rating: review.rating,
-            content: review.content,
-            images: imageUrls
-        };
-
-        // 데이터베이스에 저장
-        const { data, error } = await supabase
-            .from('reviews')
-            .insert([reviewData])
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        showLoading(false);
-        return { success: true, data };
-    } catch (error) {
-        showLoading(false);
-        console.error('리뷰 저장 오류:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// 3. 리뷰 불러오기 함수 (페이지네이션 포함)
-async function loadReviewsFromSupabase(page = 1, limit = 10) {
-    try {
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-
-        const { data, error, count } = await supabase
-            .from('reviews')
-            .select('*', { count: 'exact' })
-            .order('created_at', { ascending: false })
-            .range(from, to);
-
-        if (error) throw error;
-
-        // 날짜 포맷 변환
-        const formattedData = data.map(review => ({
-            ...review,
-            date: new Date(review.created_at).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            })
-        }));
-
-        return { 
-            reviews: formattedData, 
-            totalCount: count,
-            totalPages: Math.ceil(count / limit)
-        };
-    } catch (error) {
-        console.error('리뷰 로드 오류:', error);
-        return { reviews: [], totalCount: 0, totalPages: 0 };
-    }
-}
-
-// 4. 리뷰 삭제 함수 (관리자 인증 포함)
-async function deleteReviewFromSupabase(reviewId, adminToken) {
-    try {
-        // 관리자 토큰 확인
-        const isValid = await verifyAdminToken(adminToken);
-        if (!isValid) {
-            throw new Error('관리자 권한이 없습니다.');
-        }
-
-        // 리뷰의 이미지 먼저 삭제
-        const { data: review } = await supabase
-            .from('reviews')
-            .select('images')
-            .eq('id', reviewId)
-            .single();
-
-        if (review && review.images) {
-            for (const imageUrl of review.images) {
-                const path = imageUrl.split('/').pop();
-                await supabase.storage
-                    .from('review-images')
-                    .remove([`reviews/${path}`]);
-            }
-        }
-
-        // 리뷰 삭제
-        const { error } = await supabase
-            .from('reviews')
-            .delete()
-            .eq('id', reviewId);
-
-        if (error) throw error;
-
-        return { success: true };
-    } catch (error) {
-        console.error('리뷰 삭제 오류:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// 5. 실시간 구독 설정 (고급 기능)
-function setupRealtimeSubscription() {
-    const subscription = supabase
-        .channel('reviews-changes')
-        .on('postgres_changes', 
-            { 
-                event: '*', 
-                schema: 'public', 
-                table: 'reviews' 
-            }, 
-            (payload) => {
-                console.log('실시간 변경 감지:', payload);
-                
-                if (payload.eventType === 'INSERT') {
-                    // 새 리뷰 추가 애니메이션
-                    showToast('새로운 리뷰가 등록되었습니다!', 'info');
-                    loadReviews();
-                } else if (payload.eventType === 'DELETE') {
-                    // 리뷰 삭제 처리
-                    const reviewElement = document.querySelector(`[data-review-id="${payload.old.id}"]`);
-                    if (reviewElement) {
-                        reviewElement.style.animation = 'fadeOutDown 0.5s ease-out';
-                        setTimeout(() => loadReviews(), 500);
-                    }
-                }
-            }
-        )
-        .subscribe();
-
-    return subscription;
-}
-
-// 6. 관리자 인증 함수
-async function authenticateAdmin(password) {
-    try {
-        // 실제 구현에서는 서버 측 API를 통해 처리
-        const response = await fetch('/api/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            sessionStorage.setItem('adminToken', data.token);
-            return data.token;
-        }
-        return null;
-    } catch (error) {
-        // 임시 로컬 인증 (개발용)
-        if (password === 'admin123') {
-            const token = btoa(Date.now().toString());
-            sessionStorage.setItem('adminToken', token);
-            return token;
-        }
-        return null;
-    }
-}
-
-// 7. 관리자 토큰 확인
-async function verifyAdminToken(token) {
-    // 실제 구현에서는 Supabase에서 확인
-    // 임시로 세션 스토리지 확인
-    return sessionStorage.getItem('adminToken') === token;
-}
-
-// 8. 좋아요 기능 (선택사항)
-async function toggleLike(reviewId) {
-    try {
-        const userIp = await getUserIP(); // IP 가져오기 함수 필요
-        
-        const { data: existing } = await supabase
-            .from('review_likes')
-            .select('id')
-            .eq('review_id', reviewId)
-            .eq('user_ip', userIp)
-            .single();
-
-        if (existing) {
-            // 좋아요 취소
-            await supabase
-                .from('review_likes')
-                .delete()
-                .eq('id', existing.id);
-        } else {
-            // 좋아요 추가
-            await supabase
-                .from('review_likes')
-                .insert([{ review_id: reviewId, user_ip: userIp }]);
-        }
-
-        // 좋아요 수 업데이트
-        await updateLikeCount(reviewId);
-    } catch (error) {
-        console.error('좋아요 처리 오류:', error);
-    }
-}
-
-// ===== UI 함수 수정 =====
-
-// 리뷰 제출 함수 수정
-async function submitReview() {
-    const customerName = document.getElementById('customerName').value.trim();
-    const carModel = document.getElementById('carModel').value.trim();
-    const content = document.getElementById('reviewContent').value.trim();
     
-    if (!customerName || !carModel || !content) {
-        showToast('모든 필수 항목을 입력해주세요.', 'error');
-        return;
-    }
+    <button class="write-btn" onclick="openModal()">+</button>
     
-    const review = {
-        customerName,
-        carModel,
-        rating: currentRating,
-        content
-    };
-    
-    const result = await saveReviewToSupabase(review);
-    
-    if (result.success) {
-        closeModal();
-        showToast('후기가 성공적으로 등록되었습니다!', 'success');
-        // 실시간 업데이트가 있으므로 수동 새로고침 불필요
-    } else {
-        showToast(`오류: ${result.error}`, 'error');
-    }
-}
-
-// 페이지 로드 시 실행 수정
-let realtimeSubscription;
-
-document.addEventListener('DOMContentLoaded', async function() {
-    // 초기 데이터 로드
-    await loadReviews();
-    
-    // UI 설정
-    setupStarRating();
-    setupImageUpload();
-    
-    // 실시간 구독 시작
-    realtimeSubscription = setupRealtimeSubscription();
-    
-    // 관리자 토큰 확인
-    const savedToken = sessionStorage.getItem('adminToken');
-    if (savedToken) {
-        const isValid = await verifyAdminToken(savedToken);
-        if (isValid) {
-            isAdmin = true;
-            document.getElementById('adminBtn').textContent = '로그아웃';
-        }
-    }
-});
-
-// 페이지 언로드 시 구독 해제
-window.addEventListener('beforeunload', () => {
-    if (realtimeSubscription) {
-        supabase.removeChannel(realtimeSubscription);
-    }
-});
-
-// 로딩 표시 함수
-function showLoading(show) {
-    if (show) {
-        const loader = document.createElement('div');
-        loader.id = 'globalLoader';
-        loader.innerHTML = `
-            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                        background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); 
-                        display: flex; align-items: center; justify-content: center; z-index: 9999;">
-                <div class="loading" style="width: 50px; height: 50px; 
-                     border: 4px solid rgba(255,255,255,0.3); 
-                     border-top-color: white; border-radius: 50%; 
-                     animation: spin 1s linear infinite;"></div>
+    <!-- 리뷰 작성 모달 -->
+    <div id="writeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>출고 후기 작성</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
-        `;
-        document.body.appendChild(loader);
-    } else {
-        const loader = document.getElementById('globalLoader');
-        if (loader) loader.remove();
-    }
-}
-
-        // 중복된 Supabase 설정 제거됨 - 상단의 설정을 사용
-
-        let reviews = [];
-        let selectedImages = [];
-        let currentRating = 5;
-        let isAdmin = false;
-
-        // 토스트 알림 함수
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    ${type === 'success' 
-                        ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
-                        : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'
-                    }
-                </svg>
-                <span>${message}</span>
-            `;
             
-            document.body.appendChild(toast);
-            
-            // 토스트 스타일 추가
-            const style = document.createElement('style');
-            style.textContent = `
-                .toast {
-                    position: fixed;
-                    top: 30px;
-                    right: 30px;
-                    background: white;
-                    padding: 16px 24px;
-                    border-radius: 50px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-weight: 500;
-                    z-index: 10000;
-                    animation: slideInRight 0.3s ease-out;
-                }
+            <form id="reviewForm">
+                <div class="form-group">
+                    <label for="carBrand">브랜드</label>
+                    <select id="carBrand" class="form-control" required>
+                        <option value="">브랜드를 선택하세요</option>
+                        <option value="제네시스">제네시스</option>
+                        <option value="벤츠">Mercedes-Benz</option>
+                        <option value="BMW">BMW</option>
+                        <option value="아우디">Audi</option>
+                        <option value="포르쉐">Porsche</option>
+                        <option value="테슬라">Tesla</option>
+                        <option value="렉서스">Lexus</option>
+                        <option value="볼보">Volvo</option>
+                        <option value="재규어">Jaguar</option>
+                        <option value="마세라티">Maserati</option>
+                        <option value="현대">현대</option>
+                        <option value="기아">기아</option>
+                    </select>
+                </div>
                 
-                .toast-success {
-                    color: #22c55e;
-                    border: 1px solid #bbf7d0;
-                }
+                <div class="form-group">
+                    <label for="carModel">모델</label>
+                    <input type="text" id="carModel" class="form-control" placeholder="예: G90, S-Class, Model S" required>
+                </div>
                 
-                .toast-error {
-                    color: #ef4444;
-                    border: 1px solid #fecaca;
-                }
+                <div class="form-group">
+                    <label for="deliveryDate">출고일</label>
+                    <input type="date" id="deliveryDate" class="form-control" required>
+                </div>
                 
-                @keyframes slideInRight {
-                    from {
-                        transform: translateX(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-            `;
-            
-            if (!document.querySelector('#toast-styles')) {
-                style.id = 'toast-styles';
-                document.head.appendChild(style);
-            }
-            
-            setTimeout(() => {
-                toast.style.animation = 'slideInRight 0.3s ease-out reverse';
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
-            }, 3000);
+                <div class="form-group">
+                    <label for="author">작성자</label>
+                    <input type="text" id="author" class="form-control" placeholder="닉네임" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>만족도</label>
+                    <div class="rating-container">
+                        <span class="star-input" data-rating="1">★</span>
+                        <span class="star-input" data-rating="2">★</span>
+                        <span class="star-input" data-rating="3">★</span>
+                        <span class="star-input" data-rating="4">★</span>
+                        <span class="star-input" data-rating="5">★</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="review">상세 후기</label>
+                    <textarea id="review" class="form-control" placeholder="출고 과정, 옵션, 만족도 등을 자유롭게 작성해주세요" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>사진 첨부 (최대 5장)</label>
+                    <div class="image-upload" id="imageUpload">
+                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                        <p class="upload-text">클릭하거나 이미지를 드래그하세요</p>
+                    </div>
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">리뷰 등록</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // ImgBB API 키 - 실제 사용 시 본인의 API 키로 변경하세요!
+        const IMGBB_API_KEY = '901159983dcbb153df7e2379279f17a1';
+        
+        // Firebase 설정 - 본인의 설정으로 변경하세요
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNV9sKdlvCgDl4qum-neZ_6PuYXTtUdZQ",
+            authDomain: "car-reviews-38b83.firebaseapp.com",
+            projectId: "car-reviews-38b83",
+            storageBucket: "car-reviews-38b83.firebasestorage.app",
+            messagingSenderId: "925991647246",
+            appId: "1:925991647246:web:ac8952a4511aa8811f645f"
+        };
+        
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // ImgBB API 키 확인
+        if (IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
+            document.getElementById('setupNotice').style.display = 'block';
         }
-
-        // 페이지 로드시 실행
-        document.addEventListener('DOMContentLoaded', function() {
-            loadReviews();
-            setupStarRating();
-            setupImageUpload();
-            
-            // 부드러운 스크롤 효과
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                });
+        
+        // 전역 변수
+        let selectedRating = 0;
+        let selectedImages = [];
+        const maxImages = 5;
+        
+        // 모달 제어
+        function openModal() {
+            document.getElementById('writeModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('writeModal').classList.remove('active');
+            resetForm();
+        }
+        
+        // 별점 선택
+        document.querySelectorAll('.star-input').forEach(star => {
+            star.addEventListener('click', function() {
+                selectedRating = parseInt(this.dataset.rating);
+                updateStars();
             });
         });
-
-        // 별점 기능 설정
-        function setupStarRating() {
-            const stars = document.querySelectorAll('.star');
-            stars.forEach(star => {
-                star.addEventListener('click', function() {
-                    currentRating = parseInt(this.dataset.rating);
-                    updateStarDisplay(currentRating);
-                });
-                
-                star.addEventListener('mouseenter', function() {
-                    updateStarDisplay(parseInt(this.dataset.rating));
-                });
-            });
-            
-            document.getElementById('starRating').addEventListener('mouseleave', function() {
-                updateStarDisplay(currentRating);
-            });
-            
-            updateStarDisplay(currentRating);
-        }
-
-        function updateStarDisplay(rating) {
-            const stars = document.querySelectorAll('.star');
-            stars.forEach((star, index) => {
-                if (index < rating) {
+        
+        function updateStars() {
+            document.querySelectorAll('.star-input').forEach((star, index) => {
+                if (index < selectedRating) {
                     star.classList.add('active');
                 } else {
                     star.classList.remove('active');
                 }
             });
         }
-
-        // 이미지 업로드 기능
-        function setupImageUpload() {
-            const imageInput = document.getElementById('imageInput');
-            imageInput.addEventListener('change', handleImageUpload);
-        }
-
-        function handleImageUpload(e) {
-            const files = Array.from(e.target.files);
+        
+        // 이미지 업로드 처리
+        const imageUpload = document.getElementById('imageUpload');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        imageUpload.addEventListener('click', () => imageInput.click());
+        
+        imageUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUpload.classList.add('dragover');
+        });
+        
+        imageUpload.addEventListener('dragleave', () => {
+            imageUpload.classList.remove('dragover');
+        });
+        
+        imageUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUpload.classList.remove('dragover');
+            handleImages(e.dataTransfer.files);
+        });
+        
+        imageInput.addEventListener('change', (e) => {
+            handleImages(e.target.files);
+        });
+        
+        function handleImages(files) {
+            const validFiles = Array.from(files).filter(file => 
+                file.type.startsWith('image/') && selectedImages.length < maxImages
+            );
             
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedImages.push({
-                        url: e.target.result,
-                        file: file
-                    });
-                    updateImagePreview();
-                };
-                reader.readAsDataURL(file);
+            validFiles.forEach(file => {
+                if (selectedImages.length < maxImages) {
+                    selectedImages.push(file);
+                    displayImagePreview(file);
+                }
             });
-        }
-
-        function updateImagePreview() {
-            const preview = document.getElementById('imagePreview');
-            const count = document.getElementById('imageCount');
             
-            preview.innerHTML = selectedImages.map((img, index) => `
-                <div class="preview-image" style="background-image: url('${img.url}')">
-                    <button class="remove-image" onclick="removeImage(${index})">×</button>
-                </div>
-            `).join('');
-            
-            count.textContent = `${selectedImages.length}개의 사진이 선택됨`;
+            if (selectedImages.length >= maxImages) {
+                imageUpload.style.display = 'none';
+            }
         }
-
+        
+        function displayImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button class="remove-image" onclick="removeImage(${selectedImages.length - 1})">&times;</button>
+                `;
+                imagePreview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+        
         function removeImage(index) {
             selectedImages.splice(index, 1);
-            updateImagePreview();
+            updateImagePreviews();
+            if (selectedImages.length < maxImages) {
+                imageUpload.style.display = 'block';
+            }
         }
-
-        // 모달 관리
-        function openModal() {
-            document.getElementById('reviewModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
+        
+        function updateImagePreviews() {
+            imagePreview.innerHTML = '';
+            selectedImages.forEach((file, index) => {
+                displayImagePreview(file);
+            });
         }
-
-        function closeModal() {
-            document.getElementById('reviewModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-            resetForm();
-        }
-
-        function resetForm() {
-            document.getElementById('customerName').value = '';
-            document.getElementById('carModel').value = '';
-            document.getElementById('reviewContent').value = '';
-            selectedImages = [];
-            currentRating = 5;
-            updateStarDisplay(currentRating);
-            updateImagePreview();
-        }
-
-        // 리뷰 제출 - Supabase 연동 버전 사용
-        async function submitReview() {
-            const customerName = document.getElementById('customerName').value.trim();
-            const carModel = document.getElementById('carModel').value.trim();
-            const content = document.getElementById('reviewContent').value.trim();
+        
+        // ImgBB로 이미지 업로드
+        async function uploadToImgBB(file) {
+            const formData = new FormData();
+            formData.append('image', file);
             
-            if (!customerName || !carModel || !content) {
-                showToast('모든 필수 항목을 입력해주세요.', 'error');
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    return data.data.url;
+                } else {
+                    throw new Error('ImgBB 업로드 실패');
+                }
+            } catch (error) {
+                console.error('ImgBB 업로드 에러:', error);
+                throw error;
+            }
+        }
+        
+        // 폼 제출
+        document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (selectedRating === 0) {
+                alert('별점을 선택해주세요!');
                 return;
             }
             
-            showLoading(true);
+            if (IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
+                alert('ImgBB API 키를 설정해주세요!');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '업로드 중...';
             
             try {
-                const review = {
-                    customerName,
-                    carModel,
-                    rating: currentRating,
-                    content,
-                    images: selectedImages // 이미지 파일들
+                // 이미지를 ImgBB에 업로드
+                const imageUrls = [];
+                for (let i = 0; i < selectedImages.length; i++) {
+                    submitBtn.textContent = `이미지 업로드 중... (${i + 1}/${selectedImages.length})`;
+                    const url = await uploadToImgBB(selectedImages[i]);
+                    imageUrls.push(url);
+                }
+                
+                // 리뷰 데이터를 Firestore에 저장
+                const reviewData = {
+                    brand: document.getElementById('carBrand').value,
+                    model: document.getElementById('carModel').value,
+                    deliveryDate: document.getElementById('deliveryDate').value,
+                    author: document.getElementById('author').value,
+                    rating: selectedRating,
+                    review: document.getElementById('review').value,
+                    images: imageUrls,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                const result = await saveReviewToSupabase(review);
+                await db.collection('reviews').add(reviewData);
                 
-                if (result.success) {
-                    closeModal();
-                    showToast('후기가 성공적으로 등록되었습니다!', 'success');
-                    await loadReviewsFromSupabase(); // 새로고침
-                } else {
-                    showToast(`오류: ${result.error}`, 'error');
-                }
+                alert('리뷰가 성공적으로 등록되었습니다!');
+                closeModal();
             } catch (error) {
-                console.error('리뷰 제출 오류:', error);
-                showToast('리뷰 등록 중 오류가 발생했습니다.', 'error');
+                console.error('Error:', error);
+                alert('리뷰 등록 중 오류가 발생했습니다.');
             } finally {
-                showLoading(false);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '리뷰 등록';
             }
-        }
-
-        // 리뷰 로드 - Supabase 연동 버전 사용
-        async function loadReviews() {
-            showLoading(true);
-            
-            try {
-                const result = await loadReviewsFromSupabase();
-                
-                if (result.success) {
-                    reviews = result.data || [];
-                    displayReviews();
-                } else {
-                    console.error('리뷰 로드 오류:', result.error);
-                    // 오류 시 샘플 데이터 표시
-                    reviews = [{
-                        id: 1,
-                        customerName: '김민수',
-                        carModel: '그랜저 IG 하이브리드',
-                        rating: 5,
-                        content: '정말 만족스러운 출고였습니다. 직원분들도 친절하시고 차량 상태도 완벽했어요!',
-                        date: '2025-01-15',
-                        images: []
-                    }];
-                    displayReviews();
-                    showToast('데이터베이스 연결 오류 - 샘플 데이터를 표시합니다.', 'error');
-                }
-            } catch (error) {
-                console.error('리뷰 로드 예외:', error);
-                showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // 리뷰 표시
+        });
+        
+        // 리뷰 목록 표시
         function displayReviews() {
             const container = document.getElementById('reviewsContainer');
             
-            if (reviews.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>아직 작성된 후기가 없습니다.</p></div>';
-                return;
-            }
+            db.collection('reviews')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    if (snapshot.empty) {
+                        container.innerHTML = `
+                            <div class="loading">
+                                <p>아직 등록된 리뷰가 없습니다</p>
+                                <p style="font-size: 16px; margin-top: 10px;">첫 번째 리뷰를 작성해보세요!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    container.innerHTML = '';
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const card = createReviewCard(doc.id, data);
+                        container.appendChild(card);
+                    });
+                });
+        }
+        
+        function createReviewCard(id, data) {
+            const div = document.createElement('div');
+            div.className = 'review-card';
             
-            container.innerHTML = reviews.map(review => `
-                <div class="review-card" data-review-id="${review.id}">
-                    <div class="review-header">
-                        <div class="reviewer-info">
-                            <div class="avatar">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                            </div>
-                            <div class="reviewer-details">
-                                <h3>${review.customerName}</h3>
-                                <p class="car-model">${review.carModel}</p>
-                                <div class="review-meta">
-                                    <div class="star-rating">
-                                        ${getStarDisplay(review.rating)}
-                                    </div>
-                                    <span>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                                        </svg>
-                                        ${review.date}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        ${isAdmin ? `<button class="btn btn-danger" onclick="deleteReview(${review.id})">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            삭제
-                        </button>` : ''}
-                    </div>
-                    <p class="review-content">${review.content}</p>
-                    ${review.images && review.images.length > 0 ? `
-                        <div class="review-images">
-                            ${review.images.map((img, idx) => `
-                                <img src="${img}" alt="리뷰 이미지 ${idx + 1}" class="review-image" onclick="window.open('${img}', '_blank')">
-                            `).join('')}
-                        </div>
-                    ` : ''}
+            const imageHTML = data.images && data.images.length > 0
+                ? `<img src="${data.images[0]}" alt="${data.model}">`
+                : '<div class="no-image">🚗</div>';
+            
+            const date = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ko-KR') : '방금';
+            
+            div.innerHTML = `
+                <div class="review-images">
+                    ${imageHTML}
                 </div>
-            `).join('');
+                <div class="review-content">
+                    <div class="review-header">
+                        <div class="car-info">
+                            <h3>${data.brand} ${data.model}</h3>
+                            <p>출고일: ${data.deliveryDate}</p>
+                        </div>
+                        <div class="review-rating">${'★'.repeat(data.rating)}</div>
+                    </div>
+                    <p class="review-text">${data.review}</p>
+                    <div class="review-footer">
+                        <div class="review-meta">
+                            <div>${data.author} · ${date}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteReview('${id}')">삭제</button>
+                    </div>
+                </div>
+            `;
+            
+            return div;
         }
-
-        function getStarDisplay(rating) {
-            return Array(5).fill(0).map((_, i) => 
-                `<span style="color: ${i < rating ? '#fbbf24' : '#d1d5db'}">★</span>`
-            ).join('');
-        }
-
-        // 관리자 기능
-        function toggleAdmin() {
-            if (!isAdmin) {
-                const password = prompt('관리자 비밀번호를 입력하세요:');
-                if (password === 'admin123') {
-                    isAdmin = true;
-                    document.getElementById('adminBtn').textContent = '로그아웃';
-                    displayReviews();
-                    showToast('관리자로 로그인되었습니다.', 'success');
-                } else if (password) {
-                    showToast('비밀번호가 올바르지 않습니다.', 'error');
-                }
-            } else {
-                isAdmin = false;
-                document.getElementById('adminBtn').textContent = '관리자';
-                displayReviews();
-                showToast('로그아웃되었습니다.', 'success');
-            }
-        }
-
+        
+        // 리뷰 삭제
         async function deleteReview(id) {
             if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
-                // 실제 구현시 Supabase에서 삭제
-                // await deleteReviewFromSupabase(id);
-                
-                const reviewCard = document.querySelector(`[data-review-id="${id}"]`);
-                if (reviewCard) {
-                    reviewCard.style.animation = 'fadeOutDown 0.5s ease-out';
-                    setTimeout(() => {
-                        reviews = reviews.filter(review => review.id !== id);
-                        localStorage.setItem('carReviews', JSON.stringify(reviews));
-                        displayReviews();
-                        showToast('리뷰가 삭제되었습니다.', 'success');
-                    }, 500);
+                try {
+                    await db.collection('reviews').doc(id).delete();
+                    alert('리뷰가 삭제되었습니다.');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
                 }
             }
         }
-
-        // 모달 외부 클릭시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('reviewModal');
-            if (event.target === modal) {
+        
+        // 폼 초기화
+        function resetForm() {
+            document.getElementById('reviewForm').reset();
+            selectedRating = 0;
+            selectedImages = [];
+            updateStars();
+            imagePreview.innerHTML = '';
+            imageUpload.style.display = 'block';
+        }
+        
+        // 페이지 로드 시 리뷰 표시
+        displayReviews();
+        
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
                 closeModal();
             }
-        }
+        });
     </script>
 </body>
 </html>

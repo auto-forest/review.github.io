@@ -2,10 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>럭셔리 카 리뷰 | 프리미엄 자동차 출고 후기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AUTOFOREST | Premium Car Delivery Reviews</title>
     
-    <!-- Firebase SDK (Storage 제외) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
@@ -14,117 +14,443 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         :root {
-            --primary: #1a1a2e;
-            --secondary: #16213e;
-            --accent: #e94560;
-            --gold: #ffd700;
-            --text: #eee;
-            --text-secondary: #a8a8a8;
-            --card-bg: rgba(22, 33, 62, 0.7);
-            --glass: rgba(255, 255, 255, 0.05);
+            --primary: #1a1a1a;
+            --primary-gradient: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            --accent: #ff4444;
+            --accent-hover: #ff3333;
+            --gold: #d4af37;
+            --silver: #c0c0c0;
+            --background: #fafafa;
+            --surface: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #666666;
+            --text-light: #999999;
+            --border: #e0e0e0;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --shadow-xl: 0 16px 48px rgba(0,0,0,0.15);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
             color: var(--text);
-            overflow-x: hidden;
-        }
-        
-        /* 배경 애니메이션 */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 2;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         /* 헤더 */
         .header {
-            text-align: center;
-            margin-bottom: 60px;
-            animation: fadeInDown 1s ease;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
         }
         
-        .header h1 {
-            font-size: 3.5em;
-            font-weight: 300;
-            letter-spacing: -2px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--text) 0%, var(--gold) 100%);
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        .header p {
-            font-size: 1.2em;
+        .tagline {
+            font-size: 12px;
             color: var(--text-secondary);
-            font-weight: 300;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         
-        /* API 키 설정 안내 */
-        .setup-notice {
-            background: rgba(233, 69, 96, 0.2);
-            border: 1px solid var(--accent);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
+        /* 관리자 모드 표시 */
+        .admin-indicator {
+            background: var(--gold);
+            color: var(--primary);
+            padding: 8px 16px;
             text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            display: none;
         }
         
-        .setup-notice h3 {
-            margin-bottom: 10px;
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
         
-        .setup-notice a {
-            color: var(--gold);
-            text-decoration: none;
+        /* 통계 카드 */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
         
-        .setup-notice a:hover {
-            text-decoration: underline;
+        .stat-card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            transition: var(--transition);
         }
         
-        /* 글쓰기 버튼 */
-        .write-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: var(--accent);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 24px;
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 필터 섹션 */
+        .filter-section {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .filter-btn {
+            padding: 8px 20px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
-            transition: all 0.3s;
+            transition: var(--transition);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* 리뷰 그리드 */
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 100px;
+        }
+        
+        /* 리뷰 카드 */
+        .review-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .review-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(26, 26, 26, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        
+        .review-images {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+            background: var(--background);
+        }
+        
+        .review-images img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+        
+        .review-card:hover .review-images img {
+            transform: scale(1.05);
+        }
+        
+        .image-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .no-image {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-light);
+        }
+        
+        .no-image-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+            opacity: 0.3;
+        }
+        
+        .review-content {
+            padding: 24px;
+        }
+        
+        .review-header {
+            margin-bottom: 16px;
+        }
+        
+        .car-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .car-title h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+        }
+        
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .star {
+            color: var(--gold);
+            font-size: 16px;
+        }
+        
+        .star.empty {
+            color: var(--border);
+        }
+        
+        .car-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .delivery-date {
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        
+        .review-text {
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .review-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .author-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .review-date {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        
+        .review-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .action-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .action-btn.admin {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .action-btn.admin:hover {
+            background: var(--accent-hover);
+        }
+        
+        /* 플로팅 버튼 */
+        .fab-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
             z-index: 100;
         }
         
-        .write-btn:hover {
-            transform: scale(1.1) rotate(90deg);
-            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.7);
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .fab:active {
+            transform: scale(0.95);
+        }
+        
+        .admin-toggle {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .admin-toggle:hover {
+            border-color: var(--gold);
+            color: var(--primary);
+        }
+        
+        .admin-toggle.active {
+            background: var(--gold);
+            color: var(--primary);
+            border-color: var(--gold);
         }
         
         /* 모달 */
@@ -134,12 +460,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.6);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            padding: 20px;
+            backdrop-filter: blur(5px);
         }
         
         .modal.active {
@@ -148,129 +475,166 @@
         }
         
         .modal-content {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
-            width: 90%;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 100%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-xl);
             animation: slideUp 0.3s ease;
         }
         
         .modal-header {
+            padding: 24px 24px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
         
-        .modal-header h2 {
-            font-size: 2em;
-            font-weight: 300;
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
         }
         
-        .close-btn {
+        .modal-close {
             background: none;
             border: none;
-            color: var(--text);
-            font-size: 30px;
+            font-size: 28px;
+            color: var(--text-light);
             cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s;
+            transition: var(--transition);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
         
-        .close-btn:hover {
-            opacity: 1;
+        .modal-close:hover {
+            background: var(--background);
+            color: var(--text);
+        }
+        
+        .modal-body {
+            padding: 0 24px 24px;
         }
         
         /* 폼 스타일 */
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
-        .form-group label {
+        .form-label {
             display: block;
-            margin-bottom: 10px;
-            font-weight: 300;
-            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
             font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         
         .form-control {
             width: 100%;
-            padding: 15px;
-            background: var(--glass);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            padding: 14px 16px;
+            background: var(--background);
+            border: 2px solid transparent;
+            border-radius: var(--radius);
             color: var(--text);
             font-size: 16px;
-            transition: all 0.3s;
+            transition: var(--transition);
         }
         
         .form-control:focus {
             outline: none;
-            border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.08);
-        }
-        
-        select.form-control {
-            cursor: pointer;
+            background: white;
+            border-color: var(--primary);
         }
         
         textarea.form-control {
             resize: vertical;
             min-height: 120px;
+            font-family: inherit;
         }
         
-        /* 별점 */
-        .rating-container {
+        /* 날짜 선택 */
+        .date-input-wrapper {
+            position: relative;
+        }
+        
+        .date-shortcuts {
             display: flex;
-            gap: 15px;
-            font-size: 35px;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .date-shortcut {
+            padding: 6px 14px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .date-shortcut:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* 별점 선택 */
+        .rating-input {
+            display: flex;
+            gap: 8px;
+            font-size: 32px;
             margin-top: 10px;
         }
         
-        .star-input {
+        .rating-star {
             cursor: pointer;
-            transition: all 0.2s;
-            opacity: 0.3;
+            color: var(--border);
+            transition: var(--transition);
         }
         
-        .star-input:hover {
-            transform: scale(1.2);
-            opacity: 1;
-        }
-        
-        .star-input.active {
+        .rating-star:hover,
+        .rating-star.active {
             color: var(--gold);
-            opacity: 1;
+            transform: scale(1.1);
         }
         
         /* 이미지 업로드 */
-        .image-upload {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 40px;
+        .image-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
+            transition: var(--transition);
+            background: var(--background);
         }
         
-        .image-upload:hover {
-            border-color: var(--accent);
-            background: var(--glass);
+        .image-upload-area:hover {
+            border-color: var(--primary);
+            background: white;
         }
         
-        .image-upload.dragover {
-            border-color: var(--gold);
-            background: rgba(255, 215, 0, 0.1);
+        .image-upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(26, 26, 26, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--text-light);
+            margin-bottom: 10px;
         }
         
         .upload-text {
@@ -278,19 +642,25 @@
             font-size: 14px;
         }
         
-        .image-preview {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+        .upload-hint {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
             margin-top: 20px;
         }
         
         .preview-item {
             position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 10px;
+            aspect-ratio: 1;
+            border-radius: var(--radius);
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
         
         .preview-item img {
@@ -299,336 +669,401 @@
             object-fit: cover;
         }
         
-        .remove-image {
+        .preview-remove {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(233, 69, 96, 0.9);
+            top: 4px;
+            right: 4px;
+            background: rgba(239, 68, 68, 0.9);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 25px;
-            height: 25px;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
             font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .preview-remove:hover {
+            background: #dc2626;
+            transform: scale(1.1);
         }
         
         /* 제출 버튼 */
         .submit-btn {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--accent) 0%, #c42348 100%);
+            padding: 16px;
+            background: var(--primary-gradient);
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             color: white;
-            font-size: 18px;
-            font-weight: 500;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.5);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
         }
         
         .submit-btn:disabled {
-            opacity: 0.5;
+            background: var(--text-light);
             cursor: not-allowed;
-        }
-        
-        /* 리뷰 그리드 */
-        .reviews-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 30px;
-            margin-bottom: 100px;
-        }
-        
-        .review-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: all 0.3s;
-            animation: fadeInUp 0.5s ease;
-        }
-        
-        .review-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        .review-images {
-            position: relative;
-            height: 250px;
-            overflow: hidden;
-            background: var(--secondary);
-        }
-        
-        .review-images img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-        
-        .review-card:hover .review-images img {
-            transform: scale(1.05);
-        }
-        
-        .no-image {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-secondary);
-            font-size: 60px;
-            opacity: 0.2;
-        }
-        
-        .review-content {
-            padding: 30px;
-        }
-        
-        .review-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 20px;
-        }
-        
-        .car-info h3 {
-            font-size: 1.5em;
-            font-weight: 400;
-            margin-bottom: 5px;
-        }
-        
-        .car-info p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
-        .review-rating {
-            color: var(--gold);
-            font-size: 20px;
-        }
-        
-        .review-text {
-            color: var(--text-secondary);
-            line-height: 1.8;
-            margin-bottom: 20px;
-        }
-        
-        .review-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .review-meta {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-        
-        .delete-btn {
-            background: none;
-            border: 1px solid rgba(233, 69, 96, 0.5);
-            color: var(--accent);
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 13px;
-        }
-        
-        .delete-btn:hover {
-            background: var(--accent);
-            color: white;
+            transform: none;
         }
         
         /* 로딩 */
         .loading {
             text-align: center;
-            padding: 100px;
-            font-size: 20px;
-            color: var(--text-secondary);
+            padding: 80px 20px;
+            color: var(--text-light);
         }
         
-        .spinner {
+        .loading-spinner {
             display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--accent);
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        /* API 키 설정 안내 */
+        .setup-notice {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .setup-notice h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        
+        .setup-notice a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* 반응형 */
+        /* 모바일 최적화 */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5em;
+            .header-content {
+                padding: 16px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .container {
+                padding: 16px;
+            }
+            
+            .stats-section {
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-number {
+                font-size: 28px;
+            }
+            
+            .filter-section {
+                padding: 16px;
+                gap: 10px;
             }
             
             .reviews-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 16px;
+            }
+            
+            .review-images {
+                height: 240px;
+            }
+            
+            .review-content {
+                padding: 20px;
+            }
+            
+            .car-title h3 {
+                font-size: 18px;
+            }
+            
+            .modal {
+                padding: 0;
             }
             
             .modal-content {
-                padding: 30px 20px;
+                border-radius: 0;
+                height: 100vh;
+                max-height: 100vh;
+            }
+            
+            .modal-header {
+                padding: 20px 20px 0;
+            }
+            
+            .modal-body {
+                padding: 0 20px 20px;
+            }
+            
+            .admin-toggle {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+            
+            .date-shortcuts {
+                justify-content: space-between;
+            }
+            
+            .date-shortcut {
+                flex: 1;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .reviews-grid {
+                padding: 0 4px;
+            }
+            
+            .review-text {
+                font-size: 14px;
+            }
+            
+            .author-info {
+                gap: 8px;
+            }
+            
+            .author-avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            
+            .author-name {
+                font-size: 13px;
+            }
+            
+            .review-date {
+                font-size: 11px;
+            }
+        }
+        
+        /* iOS 안전 영역 대응 */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .fab-container {
+                bottom: calc(24px + env(safe-area-inset-bottom));
+            }
+            
+            .admin-toggle {
+                bottom: calc(24px + env(safe-area-inset-bottom));
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Luxury Car Reviews</h1>
-            <p>프리미엄 자동차 출고 경험을 공유하세요</p>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <div class="logo">AUTOFOREST</div>
+                <div class="tagline">Premium Car Delivery Experience</div>
+            </div>
         </div>
-        
-        <!-- ImgBB API 키 설정 안내 -->
+    </header>
+    
+    <!-- 관리자 모드 표시 -->
+    <div id="adminModeIndicator" class="admin-indicator">
+        🔐 관리자 모드 활성화
+    </div>
+    
+    <div class="container">
+        <!-- API 키 설정 안내 -->
         <div id="setupNotice" class="setup-notice" style="display: none;">
             <h3>⚠️ ImgBB API 키 설정이 필요합니다</h3>
             <p>이미지 업로드를 위해 ImgBB API 키를 설정해주세요.</p>
             <p>1. <a href="https://imgbb.com/" target="_blank">ImgBB.com</a>에 가입 (무료)</p>
             <p>2. <a href="https://api.imgbb.com/" target="_blank">API 섹션</a>에서 API 키 발급</p>
-            <p>3. 아래 코드에서 IMGBB_API_KEY를 본인의 키로 변경</p>
+            <p>3. 코드에서 IMGBB_API_KEY를 본인의 키로 변경</p>
         </div>
         
+        <!-- 통계 섹션 -->
+        <div class="stats-section" id="statsSection">
+            <div class="stat-card">
+                <div class="stat-number" id="totalReviews">0</div>
+                <div class="stat-label">전체 리뷰</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgRating">0.0</div>
+                <div class="stat-label">평균 만족도</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalBrands">0</div>
+                <div class="stat-label">브랜드</div>
+            </div>
+        </div>
+        
+        <!-- 필터 섹션 -->
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterReviews('all')">전체</button>
+            <button class="filter-btn" onclick="filterReviews('premium')">프리미엄</button>
+            <button class="filter-btn" onclick="filterReviews('domestic')">국산차</button>
+            <button class="filter-btn" onclick="filterReviews('imported')">수입차</button>
+            <button class="filter-btn" onclick="filterReviews('electric')">전기차</button>
+        </div>
+        
+        <!-- 리뷰 그리드 -->
         <div id="reviewsContainer" class="reviews-grid">
             <div class="loading">
-                <div class="spinner"></div>
+                <div class="loading-spinner"></div>
                 <p>리뷰를 불러오는 중...</p>
             </div>
         </div>
     </div>
     
-    <button class="write-btn" onclick="openModal()">+</button>
+    <!-- 플로팅 버튼 -->
+    <div class="fab-container">
+        <button class="fab" onclick="openModal()">
+            <span style="font-size: 28px;">+</span>
+        </button>
+    </div>
+    
+    <!-- 관리자 토글 -->
+    <button class="admin-toggle" onclick="toggleAdminMode()">관리자</button>
     
     <!-- 리뷰 작성 모달 -->
     <div id="writeModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>출고 후기 작성</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2 class="modal-title">출고 후기 작성</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             
-            <form id="reviewForm">
-                <div class="form-group">
-                    <label for="carBrand">브랜드</label>
-                    <select id="carBrand" class="form-control" required>
-                        <option value="">브랜드를 선택하세요</option>
-                        <option value="제네시스">제네시스</option>
-                        <option value="벤츠">Mercedes-Benz</option>
-                        <option value="BMW">BMW</option>
-                        <option value="아우디">Audi</option>
-                        <option value="포르쉐">Porsche</option>
-                        <option value="테슬라">Tesla</option>
-                        <option value="렉서스">Lexus</option>
-                        <option value="볼보">Volvo</option>
-                        <option value="재규어">Jaguar</option>
-                        <option value="마세라티">Maserati</option>
-                        <option value="현대">현대</option>
-                        <option value="기아">기아</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="carModel">모델</label>
-                    <input type="text" id="carModel" class="form-control" placeholder="예: G90, S-Class, Model S" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="deliveryDate">출고일</label>
-                    <input type="date" id="deliveryDate" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="author">작성자</label>
-                    <input type="text" id="author" class="form-control" placeholder="닉네임" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>만족도</label>
-                    <div class="rating-container">
-                        <span class="star-input" data-rating="1">★</span>
-                        <span class="star-input" data-rating="2">★</span>
-                        <span class="star-input" data-rating="3">★</span>
-                        <span class="star-input" data-rating="4">★</span>
-                        <span class="star-input" data-rating="5">★</span>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="form-group">
+                        <label class="form-label" for="carBrand">브랜드</label>
+                        <input type="text" id="carBrand" class="form-control" placeholder="예: 제네시스, BMW, 벤츠" required list="brandList">
+                        <datalist id="brandList">
+                            <option value="제네시스">
+                            <option value="현대">
+                            <option value="기아">
+                            <option value="BMW">
+                            <option value="벤츠">
+                            <option value="아우디">
+                            <option value="포르쉐">
+                            <option value="테슬라">
+                            <option value="렉서스">
+                            <option value="볼보">
+                            <option value="랜드로버">
+                            <option value="벤틀리">
+                            <option value="마세라티">
+                            <option value="페라리">
+                            <option value="람보르기니">
+                        </datalist>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="review">상세 후기</label>
-                    <textarea id="review" class="form-control" placeholder="출고 과정, 옵션, 만족도 등을 자유롭게 작성해주세요" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>사진 첨부 (최대 5장)</label>
-                    <div class="image-upload" id="imageUpload">
-                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
-                        <p class="upload-text">클릭하거나 이미지를 드래그하세요</p>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="carModel">모델</label>
+                        <input type="text" id="carModel" class="form-control" placeholder="예: G90, 7시리즈, S클래스" required>
                     </div>
-                    <div class="image-preview" id="imagePreview"></div>
-                </div>
-                
-                <button type="submit" class="submit-btn" id="submitBtn">리뷰 등록</button>
-            </form>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="deliveryDate">출고일</label>
+                        <div class="date-input-wrapper">
+                            <input type="date" id="deliveryDate" class="form-control" required>
+                            <div class="date-shortcuts">
+                                <button type="button" class="date-shortcut" onclick="setDate('today')">오늘</button>
+                                <button type="button" class="date-shortcut" onclick="setDate('yesterday')">어제</button>
+                                <button type="button" class="date-shortcut" onclick="setDate('week')">이번주</button>
+                                <button type="button" class="date-shortcut" onclick="setDate('month')">이번달</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="author">작성자명</label>
+                        <input type="text" id="author" class="form-control" placeholder="닉네임 또는 이름" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="password">삭제 비밀번호</label>
+                        <input type="password" id="password" class="form-control" placeholder="리뷰 삭제 시 필요" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">만족도</label>
+                        <div class="rating-input">
+                            <span class="rating-star" data-rating="1">★</span>
+                            <span class="rating-star" data-rating="2">★</span>
+                            <span class="rating-star" data-rating="3">★</span>
+                            <span class="rating-star" data-rating="4">★</span>
+                            <span class="rating-star" data-rating="5">★</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="review">상세 후기</label>
+                        <textarea id="review" class="form-control" placeholder="출고 과정, 차량 상태, 딜러 서비스 등 자세한 후기를 남겨주세요" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">사진 첨부</label>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">클릭하여 사진 선택</div>
+                            <div class="upload-hint">최대 5장, 각 10MB 이하</div>
+                        </div>
+                        <div class="image-preview-grid" id="imagePreview"></div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">리뷰 등록</button>
+                </form>
+            </div>
         </div>
     </div>
     
@@ -636,7 +1071,11 @@
         // ImgBB API 키 - 실제 사용 시 본인의 API 키로 변경하세요!
         const IMGBB_API_KEY = '901159983dcbb153df7e2379279f17a1';
         
-        // Firebase 설정 - 본인의 설정으로 변경하세요
+        // 관리자 설정
+        const ADMIN_PASSWORD = 'admin1234'; // ⚠️ 반드시 변경하세요!
+        let isAdminMode = false;
+        
+        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyBNV9sKdlvCgDl4qum-neZ_6PuYXTtUdZQ",
             authDomain: "car-reviews-38b83.firebaseapp.com",
@@ -650,28 +1089,58 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ImgBB API 키 확인
-        if (IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
-            document.getElementById('setupNotice').style.display = 'block';
-        }
-        
         // 전역 변수
         let selectedRating = 0;
         let selectedImages = [];
         const maxImages = 5;
+        let allReviews = [];
+        let currentFilter = 'all';
+        
+        // 브랜드 카테고리
+        const brandCategories = {
+            premium: ['제네시스', '렉서스', 'BMW', '벤츠', '아우디', '포르쉐', '벤틀리', '마세라티', '페라리', '람보르기니', '롤스로이스'],
+            domestic: ['현대', '기아', '제네시스', '쉐보레', '쌍용'],
+            imported: ['BMW', '벤츠', '아우디', '포르쉐', '폭스바겐', '테슬라', '렉서스', '볼보', '랜드로버'],
+            electric: ['테슬라', '현대 아이오닉', '기아 EV6', '제네시스 GV60', '포르쉐 타이칸', '아우디 e-tron']
+        };
+        
+        // 날짜 설정 함수
+        function setDate(type) {
+            const today = new Date();
+            let targetDate;
+            
+            switch(type) {
+                case 'today':
+                    targetDate = today;
+                    break;
+                case 'yesterday':
+                    targetDate = new Date(today.setDate(today.getDate() - 1));
+                    break;
+                case 'week':
+                    targetDate = new Date(today.setDate(today.getDate() - 7));
+                    break;
+                case 'month':
+                    targetDate = new Date(today.setMonth(today.getMonth() - 1));
+                    break;
+            }
+            
+            document.getElementById('deliveryDate').value = targetDate.toISOString().split('T')[0];
+        }
         
         // 모달 제어
         function openModal() {
             document.getElementById('writeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
         
         function closeModal() {
             document.getElementById('writeModal').classList.remove('active');
+            document.body.style.overflow = '';
             resetForm();
         }
         
         // 별점 선택
-        document.querySelectorAll('.star-input').forEach(star => {
+        document.querySelectorAll('.rating-star').forEach(star => {
             star.addEventListener('click', function() {
                 selectedRating = parseInt(this.dataset.rating);
                 updateStars();
@@ -679,7 +1148,7 @@
         });
         
         function updateStars() {
-            document.querySelectorAll('.star-input').forEach((star, index) => {
+            document.querySelectorAll('.rating-star').forEach((star, index) => {
                 if (index < selectedRating) {
                     star.classList.add('active');
                 } else {
@@ -688,25 +1157,25 @@
             });
         }
         
-        // 이미지 업로드 처리
-        const imageUpload = document.getElementById('imageUpload');
+        // 이미지 업로드
+        const imageUploadArea = document.getElementById('imageUploadArea');
         const imageInput = document.getElementById('imageInput');
         const imagePreview = document.getElementById('imagePreview');
         
-        imageUpload.addEventListener('click', () => imageInput.click());
+        imageUploadArea.addEventListener('click', () => imageInput.click());
         
-        imageUpload.addEventListener('dragover', (e) => {
+        imageUploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            imageUpload.classList.add('dragover');
+            imageUploadArea.classList.add('dragover');
         });
         
-        imageUpload.addEventListener('dragleave', () => {
-            imageUpload.classList.remove('dragover');
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.classList.remove('dragover');
         });
         
-        imageUpload.addEventListener('drop', (e) => {
+        imageUploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            imageUpload.classList.remove('dragover');
+            imageUploadArea.classList.remove('dragover');
             handleImages(e.dataTransfer.files);
         });
         
@@ -715,9 +1184,24 @@
         });
         
         function handleImages(files) {
-            const validFiles = Array.from(files).filter(file => 
-                file.type.startsWith('image/') && selectedImages.length < maxImages
-            );
+            const validFiles = Array.from(files).filter(file => {
+                if (!file.type.startsWith('image/')) {
+                    alert(`${file.name}은(는) 이미지 파일이 아닙니다.`);
+                    return false;
+                }
+                
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`${file.name}은(는) 10MB를 초과합니다.`);
+                    return false;
+                }
+                
+                return selectedImages.length < maxImages;
+            });
+            
+            if (validFiles.length + selectedImages.length > maxImages) {
+                alert(`최대 ${maxImages}장까지만 업로드 가능합니다.`);
+                validFiles.splice(maxImages - selectedImages.length);
+            }
             
             validFiles.forEach(file => {
                 if (selectedImages.length < maxImages) {
@@ -727,7 +1211,7 @@
             });
             
             if (selectedImages.length >= maxImages) {
-                imageUpload.style.display = 'none';
+                imageUploadArea.style.display = 'none';
             }
         }
         
@@ -738,7 +1222,7 @@
                 div.className = 'preview-item';
                 div.innerHTML = `
                     <img src="${e.target.result}" alt="Preview">
-                    <button class="remove-image" onclick="removeImage(${selectedImages.length - 1})">&times;</button>
+                    <button type="button" class="preview-remove" onclick="removeImage(${selectedImages.indexOf(file)})">&times;</button>
                 `;
                 imagePreview.appendChild(div);
             };
@@ -749,19 +1233,59 @@
             selectedImages.splice(index, 1);
             updateImagePreviews();
             if (selectedImages.length < maxImages) {
-                imageUpload.style.display = 'block';
+                imageUploadArea.style.display = 'block';
             }
         }
         
         function updateImagePreviews() {
             imagePreview.innerHTML = '';
-            selectedImages.forEach((file, index) => {
+            selectedImages.forEach(file => {
                 displayImagePreview(file);
             });
         }
         
-        // ImgBB로 이미지 업로드
+        // 이미지 압축
+        async function compressImage(file, maxWidth = 1200, quality = 0.8) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height = (maxWidth / width) * height;
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        }, 'image/jpeg', quality);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // ImgBB 업로드
         async function uploadToImgBB(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                file = await compressImage(file);
+            }
+            
             const formData = new FormData();
             formData.append('image', file);
             
@@ -783,12 +1307,22 @@
             }
         }
         
+        // 해시 함수
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+        
         // 폼 제출
         document.getElementById('reviewForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if (selectedRating === 0) {
-                alert('별점을 선택해주세요!');
+                alert('만족도를 선택해주세요!');
                 return;
             }
             
@@ -802,15 +1336,25 @@
             submitBtn.textContent = '업로드 중...';
             
             try {
-                // 이미지를 ImgBB에 업로드
-                const imageUrls = [];
-                for (let i = 0; i < selectedImages.length; i++) {
-                    submitBtn.textContent = `이미지 업로드 중... (${i + 1}/${selectedImages.length})`;
-                    const url = await uploadToImgBB(selectedImages[i]);
-                    imageUrls.push(url);
-                }
+                // 이미지 업로드
+                let completedUploads = 0;
+                submitBtn.textContent = `이미지 준비 중...`;
                 
-                // 리뷰 데이터를 Firestore에 저장
+                const uploadPromises = selectedImages.map(async (image) => {
+                    const url = await uploadToImgBB(image);
+                    completedUploads++;
+                    submitBtn.textContent = `이미지 업로드 중... (${completedUploads}/${selectedImages.length})`;
+                    return url;
+                });
+                
+                const imageUrls = await Promise.all(uploadPromises);
+                
+                submitBtn.textContent = '리뷰 저장 중...';
+                
+                // 비밀번호 해시화
+                const passwordHash = await hashPassword(document.getElementById('password').value);
+                
+                // 리뷰 데이터 저장
                 const reviewData = {
                     brand: document.getElementById('carBrand').value,
                     model: document.getElementById('carModel').value,
@@ -819,6 +1363,7 @@
                     rating: selectedRating,
                     review: document.getElementById('review').value,
                     images: imageUrls,
+                    passwordHash: passwordHash,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -835,70 +1380,59 @@
             }
         });
         
-        // 리뷰 목록 표시
-        function displayReviews() {
-            const container = document.getElementById('reviewsContainer');
-            
-            db.collection('reviews')
-                .orderBy('createdAt', 'desc')
-                .onSnapshot((snapshot) => {
-                    if (snapshot.empty) {
-                        container.innerHTML = `
-                            <div class="loading">
-                                <p>아직 등록된 리뷰가 없습니다</p>
-                                <p style="font-size: 16px; margin-top: 10px;">첫 번째 리뷰를 작성해보세요!</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    container.innerHTML = '';
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const card = createReviewCard(doc.id, data);
-                        container.appendChild(card);
-                    });
-                });
+        // 관리자 모드
+        async function toggleAdminMode() {
+            if (!isAdminMode) {
+                const password = prompt('관리자 비밀번호를 입력하세요:');
+                if (!password) return;
+                
+                const inputHash = await hashPassword(password);
+                const adminHash = await hashPassword(ADMIN_PASSWORD);
+                
+                if (inputHash === adminHash) {
+                    isAdminMode = true;
+                    document.querySelector('.admin-toggle').classList.add('active');
+                    document.querySelector('.admin-toggle').textContent = '관리자 모드';
+                    document.getElementById('adminModeIndicator').style.display = 'block';
+                    alert('관리자 모드가 활성화되었습니다.');
+                    displayReviews();
+                } else {
+                    alert('비밀번호가 올바르지 않습니다.');
+                }
+            } else {
+                isAdminMode = false;
+                document.querySelector('.admin-toggle').classList.remove('active');
+                document.querySelector('.admin-toggle').textContent = '관리자';
+                document.getElementById('adminModeIndicator').style.display = 'none';
+                displayReviews();
+            }
         }
         
-        function createReviewCard(id, data) {
-            const div = document.createElement('div');
-            div.className = 'review-card';
-            
-            const imageHTML = data.images && data.images.length > 0
-                ? `<img src="${data.images[0]}" alt="${data.model}">`
-                : '<div class="no-image">🚗</div>';
-            
-            const date = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ko-KR') : '방금';
-            
-            div.innerHTML = `
-                <div class="review-images">
-                    ${imageHTML}
-                </div>
-                <div class="review-content">
-                    <div class="review-header">
-                        <div class="car-info">
-                            <h3>${data.brand} ${data.model}</h3>
-                            <p>출고일: ${data.deliveryDate}</p>
-                        </div>
-                        <div class="review-rating">${'★'.repeat(data.rating)}</div>
-                    </div>
-                    <p class="review-text">${data.review}</p>
-                    <div class="review-footer">
-                        <div class="review-meta">
-                            <div>${data.author} · ${date}</div>
-                        </div>
-                        <button class="delete-btn" onclick="deleteReview('${id}')">삭제</button>
-                    </div>
-                </div>
-            `;
-            
-            return div;
-        }
-        
-        // 리뷰 삭제
+        // 삭제 함수
         async function deleteReview(id) {
-            if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+            const password = prompt('삭제 비밀번호를 입력하세요:');
+            if (!password) return;
+            
+            try {
+                const doc = await db.collection('reviews').doc(id).get();
+                const data = doc.data();
+                
+                const inputHash = await hashPassword(password);
+                
+                if (data.passwordHash === inputHash) {
+                    await db.collection('reviews').doc(id).delete();
+                    alert('리뷰가 삭제되었습니다.');
+                } else {
+                    alert('비밀번호가 일치하지 않습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+        
+        async function adminDeleteReview(id) {
+            if (confirm('이 리뷰를 삭제하시겠습니까?')) {
                 try {
                     await db.collection('reviews').doc(id).delete();
                     alert('리뷰가 삭제되었습니다.');
@@ -909,6 +1443,153 @@
             }
         }
         
+        // 필터 함수
+        function filterReviews(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            displayFilteredReviews();
+        }
+        
+        function displayFilteredReviews() {
+            const container = document.getElementById('reviewsContainer');
+            let filteredReviews = allReviews;
+            
+            if (currentFilter !== 'all') {
+                filteredReviews = allReviews.filter(review => {
+                    const brand = review.data.brand;
+                    return brandCategories[currentFilter] && 
+                           brandCategories[currentFilter].some(b => brand.includes(b));
+                });
+            }
+            
+            container.innerHTML = '';
+            filteredReviews.forEach(review => {
+                const card = createReviewCard(review.id, review.data);
+                container.appendChild(card);
+            });
+            
+            if (filteredReviews.length === 0) {
+                container.innerHTML = `
+                    <div class="loading">
+                        <p>해당 카테고리의 리뷰가 없습니다.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 리뷰 표시
+        function displayReviews() {
+            const container = document.getElementById('reviewsContainer');
+            
+            db.collection('reviews')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    allReviews = [];
+                    if (snapshot.empty) {
+                        container.innerHTML = `
+                            <div class="loading">
+                                <p style="font-size: 20px;">첫 번째 리뷰를 작성해주세요! 🚗</p>
+                            </div>
+                        `;
+                        updateStats([]);
+                        return;
+                    }
+                    
+                    snapshot.forEach((doc) => {
+                        allReviews.push({ id: doc.id, data: doc.data() });
+                    });
+                    
+                    updateStats(allReviews);
+                    displayFilteredReviews();
+                });
+        }
+        
+        // 통계 업데이트
+        function updateStats(reviews) {
+            const totalReviews = reviews.length;
+            const avgRating = reviews.length > 0 
+                ? (reviews.reduce((sum, r) => sum + r.data.rating, 0) / reviews.length).toFixed(1)
+                : '0.0';
+            const brands = new Set(reviews.map(r => r.data.brand)).size;
+            
+            document.getElementById('totalReviews').textContent = totalReviews;
+            document.getElementById('avgRating').textContent = avgRating;
+            document.getElementById('totalBrands').textContent = brands;
+        }
+        
+        // 리뷰 카드 생성
+        function createReviewCard(id, data) {
+            const div = document.createElement('div');
+            div.className = 'review-card';
+            
+            const isPremium = brandCategories.premium.some(b => data.brand.includes(b));
+            const badge = isPremium ? '<div class="review-badge">PREMIUM</div>' : '';
+            
+            const imageHTML = data.images && data.images.length > 0
+                ? `<img src="${data.images[0]}" alt="${data.model}">
+                   ${data.images.length > 1 ? `<div class="image-counter">+${data.images.length - 1}</div>` : ''}`
+                : `<div class="no-image">
+                       <div class="no-image-icon">🚗</div>
+                       <div>이미지 없음</div>
+                   </div>`;
+            
+            const date = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ko-KR') : '방금';
+            
+            // 별점 생성
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += `<span class="star ${i <= data.rating ? '' : 'empty'}">★</span>`;
+            }
+            
+            // 작성자 이니셜
+            const initial = data.author ? data.author.charAt(0).toUpperCase() : 'U';
+            
+            // 삭제 버튼
+            let deleteButtons = '';
+            if (isAdminMode) {
+                deleteButtons = `
+                    <button class="action-btn" onclick="deleteReview('${id}')">삭제</button>
+                    <button class="action-btn admin" onclick="adminDeleteReview('${id}')">관리자 삭제</button>
+                `;
+            } else {
+                deleteButtons = `<button class="action-btn" onclick="deleteReview('${id}')">삭제</button>`;
+            }
+            
+            div.innerHTML = `
+                ${badge}
+                <div class="review-images">
+                    ${imageHTML}
+                </div>
+                <div class="review-content">
+                    <div class="review-header">
+                        <div class="car-title">
+                            <h3>${data.brand} ${data.model}</h3>
+                            <div class="review-rating">${stars}</div>
+                        </div>
+                        <div class="car-subtitle">출고일: ${data.deliveryDate}</div>
+                    </div>
+                    <p class="review-text">${data.review}</p>
+                    <div class="review-footer">
+                        <div class="author-info">
+                            <div class="author-avatar">${initial}</div>
+                            <div class="author-details">
+                                <div class="author-name">${data.author}</div>
+                                <div class="review-date">${date}</div>
+                            </div>
+                        </div>
+                        <div class="review-actions">
+                            ${deleteButtons}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+        
         // 폼 초기화
         function resetForm() {
             document.getElementById('reviewForm').reset();
@@ -916,15 +1597,32 @@
             selectedImages = [];
             updateStars();
             imagePreview.innerHTML = '';
-            imageUpload.style.display = 'block';
+            imageUploadArea.style.display = 'block';
         }
         
-        // 페이지 로드 시 리뷰 표시
-        displayReviews();
+        // ImgBB API 키 확인
+        async function testImgBBConnection() {
+            if (IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
+                document.getElementById('setupNotice').style.display = 'block';
+            }
+        }
+        
+        // 페이지 로드 시 실행
+        window.addEventListener('load', () => {
+            testImgBBConnection();
+            displayReviews();
+        });
         
         // ESC 키로 모달 닫기
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('writeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'writeModal') {
                 closeModal();
             }
         });
